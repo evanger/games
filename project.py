@@ -14,7 +14,6 @@ class MainWindow(wx.Frame):
         self.panel = wx.Panel(self)
         self.panel.SetBackgroundColour(wx.Colour(255, 255, 255))
 
-
         # Setting up the menu.
         filemenu= wx.Menu()
 
@@ -38,95 +37,141 @@ class MainWindow(wx.Frame):
         self.min_val = 1
         self.max_val = 10
 
-        # Labels for the sliders (# player)
-        wx.StaticText(self.panel, label="Minimum Player Count:", pos=(40, 20))
-        wx.StaticText(self.panel, label="Maximum Player Count:", pos=(40, 70))
-
-        # Display for current range (# player)
-        self.range_display = wx.StaticText(self.panel, label="", pos=(40, 130))
-        self.update_range_display()
-
-        # Slider for MIN value (# player)
-        self.slider_min = wx.Slider(self.panel, value=1, minValue=self.min_val,
-                                    maxValue=self.max_val, pos=(40, 40),
-                                    size=(350, -1),
-                                    style=wx.SL_HORIZONTAL | wx.SL_LABELS)
-
-        # Slider for MAX value (# player)
-        self.slider_max = wx.Slider(self.panel, value=4, minValue=self.min_val,
-                                    maxValue=self.max_val, pos=(40, 90),
-                                    size=(350, -1),
-                                    style=wx.SL_HORIZONTAL | wx.SL_LABELS)
-
-        # Bind slider events (# player)
-        self.slider_min.Bind(wx.EVT_SLIDER, self.on_min_slider_change)
-        self.slider_max.Bind(wx.EVT_SLIDER, self.on_max_slider_change)
-
-        #
-        #
-        # Duplicate double sliders for game complexity
         # Range boundaries (wt)
         self.min_val_wt = 1
         self.max_val_wt = 5
 
-        # Labels for the sliders (wt)
-        wx.StaticText(self.panel, label="Minimum Game Weight:", pos=(460, 20))
-        wx.StaticText(self.panel, label="Maximum Game Weight:", pos=(460, 70))
+        # Create UI components
+        self.create_ui()
 
-        # Display for current range (wt)
-        self.range_display_wt = wx.StaticText(self.panel, label="", pos=(460, 130))
-        self.update_range_display_wt()
+        DisplayGames(self)
 
-        # Slider for MIN value (wt)
+        self.Show(True)
+
+    def create_ui(self):
+        """Create the UI using sizers instead of absolute positioning."""
+        
+        # Main vertical sizer
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        # ===== TOP SECTION: Player Count and Game Weight Sliders =====
+        sliders_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        
+        # Left side: Player Count Sliders
+        player_sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        player_min_label = wx.StaticText(self.panel, label="Minimum Player Count:")
+        player_sizer.Add(player_min_label, 0, wx.ALL, 5)
+        
+        self.slider_min = wx.Slider(self.panel, value=1, minValue=self.min_val,
+                                    maxValue=self.max_val,
+                                    style=wx.SL_HORIZONTAL | wx.SL_LABELS)
+        player_sizer.Add(self.slider_min, 0, wx.EXPAND | wx.ALL, 5)
+        
+        player_max_label = wx.StaticText(self.panel, label="Maximum Player Count:")
+        player_sizer.Add(player_max_label, 0, wx.ALL, 5)
+        
+        self.slider_max = wx.Slider(self.panel, value=4, minValue=self.min_val,
+                                    maxValue=self.max_val,
+                                    style=wx.SL_HORIZONTAL | wx.SL_LABELS)
+        player_sizer.Add(self.slider_max, 0, wx.EXPAND | wx.ALL, 5)
+        
+        self.range_display = wx.StaticText(self.panel, label="")
+        player_sizer.Add(self.range_display, 0, wx.ALL, 5)
+        self.update_range_display()
+        
+        # Bind slider events (# player)
+        self.slider_min.Bind(wx.EVT_SLIDER, self.on_min_slider_change)
+        self.slider_max.Bind(wx.EVT_SLIDER, self.on_max_slider_change)
+        
+        sliders_sizer.Add(player_sizer, 1, wx.EXPAND | wx.ALL, 10)
+        
+        # Right side: Game Weight Sliders
+        weight_sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        weight_min_label = wx.StaticText(self.panel, label="Minimum Game Weight:")
+        weight_sizer.Add(weight_min_label, 0, wx.ALL, 5)
+        
         self.slider_min_wt = wx.Slider(self.panel, value=1, minValue=self.min_val_wt,
-                                    maxValue=self.max_val_wt, pos=(460, 40),
-                                    size=(350, -1),
+                                    maxValue=self.max_val_wt,
                                     style=wx.SL_HORIZONTAL | wx.SL_LABELS)
-
-        # Slider for MAX value (wt)
+        weight_sizer.Add(self.slider_min_wt, 0, wx.EXPAND | wx.ALL, 5)
+        
+        weight_max_label = wx.StaticText(self.panel, label="Maximum Game Weight:")
+        weight_sizer.Add(weight_max_label, 0, wx.ALL, 5)
+        
         self.slider_max_wt = wx.Slider(self.panel, value=5, minValue=self.min_val_wt,
-                                    maxValue=self.max_val_wt, pos=(460, 90),
-                                    size=(350, -1),
+                                    maxValue=self.max_val_wt,
                                     style=wx.SL_HORIZONTAL | wx.SL_LABELS)
-
+        weight_sizer.Add(self.slider_max_wt, 0, wx.EXPAND | wx.ALL, 5)
+        
+        self.range_display_wt = wx.StaticText(self.panel, label="")
+        weight_sizer.Add(self.range_display_wt, 0, wx.ALL, 5)
+        self.update_range_display_wt()
+        
         # Bind slider events (wt)
         self.slider_min_wt.Bind(wx.EVT_SLIDER, self.on_min_slider_change_wt)
         self.slider_max_wt.Bind(wx.EVT_SLIDER, self.on_max_slider_change_wt)
-
-        # the combobox Control for number of games to display
+        
+        sliders_sizer.Add(weight_sizer, 1, wx.EXPAND | wx.ALL, 10)
+        
+        main_sizer.Add(sliders_sizer, 0, wx.EXPAND)
+        
+        # Add separator line
+        main_sizer.Add(wx.StaticLine(self.panel), 0, wx.EXPAND | wx.ALL, 5)
+        
+        # ===== MIDDLE SECTION: Controls =====
+        controls_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        
+        # Left side: Number of results
+        results_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        results_label = wx.StaticText(self.panel, label="Number of Results to Display:")
+        results_sizer.Add(results_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        
         self.sampleList = ['5','10','15']
         self.default_selection = '10'
-        self.lblhear = wx.StaticText(self.panel, label="Number of Results to Display", pos=(40, 205))
-        self.edithear = wx.ComboBox(self.panel, pos=(205, 200), size=(95, -1), choices=self.sampleList, value=self.default_selection, style=wx.CB_DROPDOWN)
+        self.edithear = wx.ComboBox(self.panel, size=(95, -1), choices=self.sampleList, 
+                                    value=self.default_selection, style=wx.CB_DROPDOWN)
         self.Bind(wx.EVT_COMBOBOX, self.EvtComboBox, self.edithear)
-
-        # Radio buttons for top or random
-        self.radio_button_Top = wx.RadioButton(self.panel, label="Top", pos=(580, 205))
+        results_sizer.Add(self.edithear, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        
+        controls_sizer.Add(results_sizer, 0, wx.ALL, 10)
+        
+        # Add spacer
+        controls_sizer.AddStretchSpacer()
+        
+        # Right side: Order controls
+        order_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        order_label = wx.StaticText(self.panel, label="Order of Results:")
+        order_sizer.Add(order_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        
+        self.radio_button_Top = wx.RadioButton(self.panel, label="Top")
         self.radio_button_Top.SetValue(True)
-        self.radio_button_Random = wx.RadioButton(self.panel, label="Random", pos=(630, 205))
-
-        # Label for radio buttons
-        wx.StaticText(self.panel, label="Order of Results", pos=(460, 205))
-
+        order_sizer.Add(self.radio_button_Top, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        
+        self.radio_button_Random = wx.RadioButton(self.panel, label="Random")
+        order_sizer.Add(self.radio_button_Random, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        
         # Bind an event handler to the radio button
         self.radio_button_Top.Bind(wx.EVT_RADIOBUTTON, self.on_radio_button_click)
         self.radio_button_Random.Bind(wx.EVT_RADIOBUTTON, self.on_radio_button_click)
-
-        # Create a button for getting a new random result
-        self.my_button = wx.Button(self.panel, label="New Random Set", pos=(700, 200))
+        
+        self.my_button = wx.Button(self.panel, label="New Random Set")
         self.my_button.Show(self.radio_button_Random.GetValue())
-
-        # Bind an event handler to the button
         self.my_button.Bind(wx.EVT_BUTTON, self.on_button_click)
-
-        # Create a ListCtrl in report mode with specific position and size
-        self.list_ctrl = wx.ListCtrl(self.panel, pos=(40, 280), size=(775, 320),
-                                    style=wx.LC_REPORT | wx.BORDER_NONE)
-
-        # Prevent the ListCtrl from expanding
-        self.list_ctrl.SetMinSize((775, 320))
-        self.list_ctrl.SetMaxSize((775, 320))
-
+        order_sizer.Add(self.my_button, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        
+        controls_sizer.Add(order_sizer, 0, wx.ALL, 10)
+        
+        main_sizer.Add(controls_sizer, 0, wx.EXPAND)
+        
+        # Add separator line
+        main_sizer.Add(wx.StaticLine(self.panel), 0, wx.EXPAND | wx.ALL, 5)
+        
+        # ===== BOTTOM SECTION: Game List =====
+        self.list_ctrl = wx.ListCtrl(self.panel,
+                                    style=wx.LC_REPORT | wx.BORDER_SUNKEN)
+        
         # Make the header font bold
         bold_font = wx.Font(wx.NORMAL_FONT.GetPointSize(),
                             wx.DEFAULT,
@@ -145,16 +190,15 @@ class MainWindow(wx.Frame):
         self.list_ctrl.InsertColumn(3, 'Geek Rating', width=105, format = wx.LIST_FORMAT_CENTRE)
         self.list_ctrl.InsertColumn(4, 'Play Time (min)', width=105, format = wx.LIST_FORMAT_CENTRE)
         self.list_ctrl.InsertColumn(5, 'BGG Rank', width=105, format = wx.LIST_FORMAT_CENTRE)
-
-        DisplayGames(self)
-
-        self.Show(True)
-
+        
+        main_sizer.Add(self.list_ctrl, 1, wx.EXPAND | wx.ALL, 10)
+        
+        # Set the sizer for the panel
+        self.panel.SetSizer(main_sizer)
 
     def get_status_text(self, field=0):
         """Helper method to get the current status bar text for testing."""
         return self.GetStatusBar().GetStatusText(field)
-
 
     def on_button_click(self, event):
         DisplayGames(self)
@@ -166,6 +210,7 @@ class MainWindow(wx.Frame):
     def on_radio_button_click(self, event):
         selected_radio = event.GetEventObject()
         self.my_button.Show(self.radio_button_Random.GetValue())
+        self.panel.Layout()  # Refresh layout when showing/hiding button
         DisplayGames(self)
 
     def update_range_display(self):
@@ -198,8 +243,6 @@ class MainWindow(wx.Frame):
         self.update_range_display()
         DisplayGames(self)
 
-    #
-    # duplicate double sliders for game complexity
     def update_range_display_wt(self):
         """Update the text showing the current range."""
         min_v_wt = self.slider_min_wt.GetValue() if hasattr(self, 'slider_min_wt') else 1
@@ -268,7 +311,6 @@ class MainWindow(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
-
     def OnUpdate(self):
         with wx.FileDialog(self, "Open BGG csv file", wildcard="XYZ files (*.csv)|*.csv",
                         style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
@@ -282,13 +324,10 @@ class MainWindow(wx.Frame):
         self.Close(True)
 
 
-
 def main():
-
     app = wx.App(False)
     frame = MainWindow(None, "Brent's Game Room")
     app.MainLoop()
-
 
 
 def DisplayGames(app):
@@ -323,7 +362,6 @@ def DisplayGames(app):
 
     results = cursor.fetchall()
 
-
     # Populate the ListCtrl with data
     for i, row in enumerate(results):
         if int(row[24]) > 100000:
@@ -339,7 +377,6 @@ def DisplayGames(app):
 
     cursor.close()
     conn.close()
-
 
 
 def DeleteDatabase(app):
