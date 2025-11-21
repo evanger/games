@@ -7,7 +7,7 @@ import wx
 
 class MainWindow(wx.Frame):
     def __init__(self, parent, title):
-        wx.Frame.__init__(self, parent, title=title, size=(880,700))
+        wx.Frame.__init__(self, parent, title=title)
         self.CreateStatusBar()
         self.SetStatusText("Application ready.")
 
@@ -172,6 +172,9 @@ class MainWindow(wx.Frame):
         self.list_ctrl = wx.ListCtrl(self.panel,
                                     style=wx.LC_REPORT | wx.BORDER_SUNKEN)
         
+        # Set minimum size for the list control to ensure it's fully visible
+        self.list_ctrl.SetMinSize((775, 405))
+        
         # Make the header font bold
         bold_font = wx.Font(wx.NORMAL_FONT.GetPointSize(),
                             wx.DEFAULT,
@@ -195,6 +198,10 @@ class MainWindow(wx.Frame):
         
         # Set the sizer for the panel
         self.panel.SetSizer(main_sizer)
+        
+        # Fit the frame to its contents
+        main_sizer.Fit(self)
+        self.SetMinSize(self.GetSize())  # Set minimum window size to initial fit size
 
     def get_status_text(self, field=0):
         """Helper method to get the current status bar text for testing."""
