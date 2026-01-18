@@ -4,6 +4,45 @@ import os
 import sys
 import time
 import wx
+import shutil
+
+# ============================================
+# PyInstaller Database Handling
+# ============================================
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
+
+def get_database_path():
+    """Get writable path for database file"""
+    # Check if running as PyInstaller exe
+    if getattr(sys, 'frozen', False):
+        # Running as compiled exe - use user's AppData folder
+        app_data = os.path.join(os.environ['APPDATA'], 'GameCollection')
+        if not os.path.exists(app_data):
+            os.makedirs(app_data)
+        db_path = os.path.join(app_data, 'collection.db')
+        
+        # Copy template database from bundled resources if it doesn't exist
+        if not os.path.exists(db_path):
+            template_db = resource_path('collection.db')
+            if os.path.exists(template_db):
+                shutil.copy2(template_db, db_path)
+        
+        return db_path
+    else:
+        # Running as Python script - use current directory
+        return 'collection.db'
+
+# Global database path - use this throughout the code
+DB_PATH = get_database_path()
 
 class MainWindow(wx.Frame):
     def __init__(self, parent, title):
@@ -346,7 +385,7 @@ def DisplayGames(app):
     else:
         sql_str = "SELECT * FROM games WHERE (minplayers >= ? AND maxplayers <= ?) AND (avgweight >= ? AND avgweight <= ?) ORDER BY RANDOM() LIMIT ?"
 
-    conn = sqlite3.connect('collection.db')
+    conn = sqlite3.connect('DB_PATH')
     cursor = conn.cursor()
     query = f"SELECT name FROM sqlite_master WHERE type='table' AND name='games';"
     cursor.execute(query)
@@ -361,7 +400,7 @@ def DisplayGames(app):
     cursor.close()
 
     conn.close()
-    conn = sqlite3.connect('collection.db')
+    conn = sqlite3.connect('DB_PATH')
     conn.set_trace_callback(app.SetStatusText)
 
     cursor = conn.cursor()
@@ -387,12 +426,12 @@ def DisplayGames(app):
 
 
 def DeleteDatabase(app):
-    conn = sqlite3.connect('collection.db')
+    conn = sqlite3.connect('DB_PATH')
     conn.close()
     # Check if the file exists before attempting to delete it
-    if os.path.exists('collection.db'):
+    if os.path.exists('DB_PATH'):
         try:
-            os.remove('collection.db')
+            os.remove('DB_PATH')
             app.SetStatusText("Games database successfully deleted.")
             time.sleep(2)
             DisplayGames(app)
@@ -408,7 +447,7 @@ def UpdateDatabase(app,FilePath):
     df = pd.read_csv(FilePath)
     df.set_index('objectname')
 
-    conn = sqlite3.connect('collection.db')
+    conn = sqlite3.connect('DB_PATH')
 
     cursor = conn.cursor()
     query = f"SELECT name FROM sqlite_master WHERE type='table' AND name='games';"
