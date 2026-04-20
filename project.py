@@ -84,7 +84,7 @@ class MainWindow(wx.Frame):
         player_max_label = wx.StaticText(self.panel, label="Maximum Player Count:")
         player_sizer.Add(player_max_label, 0, wx.ALL, 5)
         
-        self.slider_max = wx.Slider(self.panel, value=4, minValue=self.min_val,
+        self.slider_max = wx.Slider(self.panel, value=10, minValue=self.min_val,
                                     maxValue=self.max_val,
                                     style=wx.SL_HORIZONTAL | wx.SL_LABELS)
         player_sizer.Add(self.slider_max, 0, wx.EXPAND | wx.ALL, 5)
