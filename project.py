@@ -5,6 +5,7 @@ import sys
 import time
 import wx
 
+
 class MainWindow(wx.Frame):
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title=title)
@@ -59,7 +60,19 @@ class MainWindow(wx.Frame):
         
         # Left side: Player Count Sliders
         player_sizer = wx.BoxSizer(wx.VERTICAL)
-        
+
+        # Number of Players spinner (up/down arrow selector)
+        num_players_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        num_players_label = wx.StaticText(self.panel, label="Number of Players:")
+        num_players_sizer.Add(num_players_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+
+        self.num_players_spin = wx.SpinCtrl(self.panel, value="2", min=1, max=self.max_val,
+                                            initial=2, size=(60, -1))
+        self.num_players_spin.Bind(wx.EVT_SPINCTRL, self.on_num_players_change)
+        num_players_sizer.Add(self.num_players_spin, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+
+        player_sizer.Add(num_players_sizer, 0, wx.ALL, 0)
+
         player_min_label = wx.StaticText(self.panel, label="Minimum Player Count:")
         player_sizer.Add(player_min_label, 0, wx.ALL, 5)
         
@@ -207,6 +220,10 @@ class MainWindow(wx.Frame):
         """Helper method to get the current status bar text for testing."""
         return self.GetStatusBar().GetStatusText(field)
 
+    def on_num_players_change(self, event):
+        """Handle Number of Players spinner changes."""
+        DisplayGames(self)
+
     def on_button_click(self, event):
         DisplayGames(self)
 
@@ -342,9 +359,9 @@ def DisplayGames(app):
     app.list_ctrl.DeleteAllItems()
 
     if app.radio_button_Top.GetValue():
-        sql_str = "SELECT * FROM games WHERE (minplayers >= ? AND maxplayers <= ?) AND (avgweight >= ? AND avgweight <= ?) ORDER BY baverage DESC LIMIT ?"
+        sql_str = "SELECT * FROM games WHERE (minplayers <= ? AND maxplayers >= ?) AND (minplayers >= ? AND maxplayers <= ?) AND (avgweight >= ? AND avgweight <= ?) ORDER BY baverage DESC LIMIT ?"
     else:
-        sql_str = "SELECT * FROM games WHERE (minplayers >= ? AND maxplayers <= ?) AND (avgweight >= ? AND avgweight <= ?) ORDER BY RANDOM() LIMIT ?"
+        sql_str = "SELECT * FROM games WHERE (minplayers <= ? AND maxplayers >= ?) AND (minplayers >= ? AND maxplayers <= ?) AND (avgweight >= ? AND avgweight <= ?) ORDER BY RANDOM() LIMIT ?"
 
     conn = sqlite3.connect('collection.db')
     cursor = conn.cursor()
@@ -365,7 +382,7 @@ def DisplayGames(app):
     conn.set_trace_callback(app.SetStatusText)
 
     cursor = conn.cursor()
-    cursor.execute(sql_str, (app.slider_min.GetValue(),app.slider_max.GetValue(),app.slider_min_wt.GetValue(),app.slider_max_wt.GetValue(),int(app.edithear.GetValue())))
+    cursor.execute(sql_str, (app.num_players_spin.GetValue(), app.num_players_spin.GetValue(), app.slider_min.GetValue(), app.slider_max.GetValue(), app.slider_min_wt.GetValue(), app.slider_max_wt.GetValue(), int(app.edithear.GetValue())))
 
     results = cursor.fetchall()
 
