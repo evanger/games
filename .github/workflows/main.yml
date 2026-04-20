@@ -28,7 +28,7 @@ jobs:
 
       - name: Build exe with PyInstaller
         run: |
-          pyinstaller --onefile --windowed --name "GamesCollection" project.py
+          pyinstaller --onefile --windowed --icon="die.ico" --name "GamesCollection" project.py
 
       - name: Upload exe as artifact
         uses: actions/upload-artifact@v4
