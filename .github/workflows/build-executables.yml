@@ -1,0 +1,141 @@
+name: Build Multi-Platform Executables
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allows manual trigger from Actions tab
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller wxPython pandas
+    
+    - name: Build Windows executable
+      run: |
+        pyinstaller --onefile --windowed --icon=d6.ico --add-data "collection.db;." --name GameCollection project.py
+    
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: GameCollection-Windows
+        path: dist/GameCollection.exe
+        retention-days: 90
+
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller wxPython pandas
+    
+    - name: Convert icon to icns (if d6.icns doesn't exist)
+      run: |
+        # This step creates a Mac icon from your .ico file
+        # Skip if you already have d6.icns
+        if [ ! -f "d6.icns" ]; then
+          mkdir -p MyIcon.iconset
+          sips -z 16 16 d6.ico --out MyIcon.iconset/icon_16x16.png 2>/dev/null || echo "Skipping icon conversion"
+          sips -z 32 32 d6.ico --out MyIcon.iconset/icon_32x32.png 2>/dev/null || echo "Skipping icon conversion"
+          sips -z 128 128 d6.ico --out MyIcon.iconset/icon_128x128.png 2>/dev/null || echo "Skipping icon conversion"
+          sips -z 256 256 d6.ico --out MyIcon.iconset/icon_256x256.png 2>/dev/null || echo "Skipping icon conversion"
+          sips -z 512 512 d6.ico --out MyIcon.iconset/icon_512x512.png 2>/dev/null || echo "Skipping icon conversion"
+          iconutil -c icns MyIcon.iconset -o d6.icns 2>/dev/null || echo "Icon conversion failed"
+        fi
+    
+    - name: Build macOS executable
+      run: |
+        # Build with .icns if it exists, otherwise without icon
+        if [ -f "d6.icns" ]; then
+          pyinstaller --onefile --windowed --icon=d6.icns --add-data "collection.db:." --name GameCollection project.py
+        else
+          pyinstaller --onefile --windowed --add-data "collection.db:." --name GameCollection project.py
+        fi
+    
+    - name: Upload macOS artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: GameCollection-macOS
+        path: dist/GameCollection.app
+        retention-days: 90
+
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-dev libnotify-dev libsdl2-dev
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller wxPython pandas
+    
+    - name: Build Linux executable
+      run: |
+        pyinstaller --onefile --windowed --add-data "collection.db:." --name GameCollection project.py
+    
+    - name: Make executable
+      run: |
+        chmod +x dist/GameCollection
+    
+    - name: Upload Linux artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: GameCollection-Linux
+        path: dist/GameCollection
+        retention-days: 90
+
+  # Optional: Create a release with all three binaries
+  create-release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')  # Only on version tags
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          GameCollection-Windows/GameCollection.exe
+          GameCollection-macOS/GameCollection.app
+          GameCollection-Linux/GameCollection
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
